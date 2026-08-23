@@ -38,7 +38,7 @@ class ReviewIntegrationTest {
     private ReviewPersistencePort persistencePort;
 
     @MockBean
-    private org.springframework.ai.chat.client.ChatClient chatClient;
+    private com.yash.prreview.infrastructure.ai.GroqClient groqClient;
 
     @Test
     void shouldPersistAndRetrieveReview() {

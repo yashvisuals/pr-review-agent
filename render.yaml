@@ -13,7 +13,7 @@ services:
       - key: REDIS_SSL_ENABLED
         value: "true"
       - key: GROQ_API_KEY
-        sync: false         # Set manually in Render dashboard (from groq.com)
+        sync: false         # From console.groq.com — free, no credit card
       - key: GITHUB_TOKEN
         sync: false         # GitHub personal access token
       - key: GITHUB_WEBHOOK_SECRET

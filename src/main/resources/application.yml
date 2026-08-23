@@ -40,16 +40,10 @@ spring:
           max-active: 4
           max-idle: 2
 
-  ai:
-    openai:
-      # Groq free tier: https://console.groq.com — no credit card, 6000 RPM
-      api-key: ${GROQ_API_KEY}
-      base-url: https://api.groq.com/openai/v1
-      chat:
-        options:
-          model: llama-3.3-70b-versatile
-          temperature: 0.1
-          max-tokens: 4096
+# Groq free tier — https://console.groq.com
+groq:
+  api-key: ${GROQ_API_KEY}
+  model: llama-3.3-70b-versatile
 
 # GitHub configuration
 github:
