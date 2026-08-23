@@ -6,8 +6,8 @@ import com.yash.prreview.domain.model.ReviewResult;
 import com.yash.prreview.presentation.api.dto.ManualReviewRequest;
 import com.yash.prreview.presentation.api.dto.ReviewResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,14 +17,20 @@ import java.util.List;
  * REST API for review history and manual triggering.
  * Follows RESTful conventions with proper HTTP status codes.
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/reviews")
-@RequiredArgsConstructor
 public class ReviewController {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewController.class);
 
     private final GetReviewHistoryUseCase getReviewHistoryUseCase;
     private final TriggerManualReviewUseCase triggerManualReviewUseCase;
+
+    public ReviewController(GetReviewHistoryUseCase getReviewHistoryUseCase,
+                             TriggerManualReviewUseCase triggerManualReviewUseCase) {
+        this.getReviewHistoryUseCase = getReviewHistoryUseCase;
+        this.triggerManualReviewUseCase = triggerManualReviewUseCase;
+    }
 
     /**
      * GET /api/v1/reviews/{reviewId}

@@ -9,8 +9,8 @@ import com.yash.prreview.domain.port.ReviewPersistencePort;
 import com.yash.prreview.domain.service.ReviewOrchestrationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -21,16 +21,28 @@ import org.springframework.stereotype.Service;
  *
  * Flow: webhook received → validate → fetch PR details → AI review → persist → post to GitHub
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProcessWebhookUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(ProcessWebhookUseCase.class);
 
     private final ReviewOrchestrationService orchestrationService;
     private final GitHubPort gitHubPort;
     private final ReviewPersistencePort persistencePort;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
+
+    public ProcessWebhookUseCase(ReviewOrchestrationService orchestrationService,
+                                  GitHubPort gitHubPort,
+                                  ReviewPersistencePort persistencePort,
+                                  ApplicationEventPublisher eventPublisher,
+                                  MeterRegistry meterRegistry) {
+        this.orchestrationService = orchestrationService;
+        this.gitHubPort = gitHubPort;
+        this.persistencePort = persistencePort;
+        this.eventPublisher = eventPublisher;
+        this.meterRegistry = meterRegistry;
+    }
 
     /**
      * Handles incoming PR events asynchronously.

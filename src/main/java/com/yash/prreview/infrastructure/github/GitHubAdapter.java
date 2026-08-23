@@ -5,7 +5,8 @@ import com.yash.prreview.domain.model.ReviewComment;
 import com.yash.prreview.domain.model.ReviewResult;
 import com.yash.prreview.domain.port.GitHubPort;
 import com.yash.prreview.infrastructure.github.dto.GitHubFileDto;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -23,9 +24,10 @@ import java.util.Map;
  * Uses Spring WebFlux WebClient for non-blocking HTTP calls.
  * Implements retry logic for transient failures.
  */
-@Slf4j
 @Component
 public class GitHubAdapter implements GitHubPort {
+
+    private static final Logger log = LoggerFactory.getLogger(GitHubAdapter.class);
 
     private final WebClient webClient;
 

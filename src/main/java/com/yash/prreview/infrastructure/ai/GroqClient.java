@@ -1,6 +1,7 @@
 package com.yash.prreview.infrastructure.ai;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,9 +16,10 @@ import java.util.Map;
  * Groq provides free inference on Llama 3.3 70B via an OpenAI-compatible REST API.
  * No SDK needed — clean HTTP integration.
  */
-@Slf4j
 @Component
 public class GroqClient {
+
+    private static final Logger log = LoggerFactory.getLogger(GroqClient.class);
 
     private final WebClient webClient;
     private final String model;

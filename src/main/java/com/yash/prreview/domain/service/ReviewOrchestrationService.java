@@ -2,8 +2,8 @@ package com.yash.prreview.domain.service;
 
 import com.yash.prreview.domain.model.*;
 import com.yash.prreview.domain.port.AiReviewPort;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,12 +19,16 @@ import java.util.stream.Collectors;
  * Key design: each file × each analysis dimension runs as a separate virtual thread,
  * allowing massive concurrency without the overhead of platform threads.
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ReviewOrchestrationService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReviewOrchestrationService.class);
+
     private final AiReviewPort aiReviewPort;
+
+    public ReviewOrchestrationService(AiReviewPort aiReviewPort) {
+        this.aiReviewPort = aiReviewPort;
+    }
 
     private static final List<ReviewCategory> ANALYSIS_DIMENSIONS = List.of(
             ReviewCategory.SECURITY,

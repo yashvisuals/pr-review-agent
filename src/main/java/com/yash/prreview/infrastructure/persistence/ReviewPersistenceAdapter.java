@@ -2,7 +2,6 @@ package com.yash.prreview.infrastructure.persistence;
 
 import com.yash.prreview.domain.model.*;
 import com.yash.prreview.domain.port.ReviewPersistencePort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +14,13 @@ import java.util.Optional;
  * Maps between domain records and JPA entities.
  */
 @Component
-@RequiredArgsConstructor
 public class ReviewPersistenceAdapter implements ReviewPersistencePort {
 
     private final ReviewJpaRepository jpaRepository;
+
+    public ReviewPersistenceAdapter(ReviewJpaRepository jpaRepository) {
+        this.jpaRepository = jpaRepository;
+    }
 
     @Override
     @Transactional

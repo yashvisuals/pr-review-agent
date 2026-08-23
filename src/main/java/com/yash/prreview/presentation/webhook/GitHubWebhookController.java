@@ -5,8 +5,8 @@ import com.yash.prreview.domain.model.PullRequest;
 import com.yash.prreview.infrastructure.github.WebhookSignatureVerifier;
 import com.yash.prreview.infrastructure.github.dto.WebhookPayload;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
@@ -23,18 +23,27 @@ import java.util.Set;
  * Design: returns 200 immediately after signature validation.
  * Actual review processing is asynchronous via Spring Events + virtual threads.
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/webhooks")
-@RequiredArgsConstructor
 public class GitHubWebhookController {
 
+    private static final Logger log = LoggerFactory.getLogger(GitHubWebhookController.class);
     private static final Set<String> REVIEWABLE_ACTIONS = Set.of("opened", "reopened", "synchronize");
 
     private final WebhookSignatureVerifier signatureVerifier;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
     private final ObjectMapper objectMapper;
+
+    public GitHubWebhookController(WebhookSignatureVerifier signatureVerifier,
+                                    ApplicationEventPublisher eventPublisher,
+                                    MeterRegistry meterRegistry,
+                                    ObjectMapper objectMapper) {
+        this.signatureVerifier = signatureVerifier;
+        this.eventPublisher = eventPublisher;
+        this.meterRegistry = meterRegistry;
+        this.objectMapper = objectMapper;
+    }
 
     @PostMapping("/github")
     public ResponseEntity<Map<String, String>> handleWebhook(

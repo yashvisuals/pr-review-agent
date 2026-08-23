@@ -6,8 +6,8 @@ import com.yash.prreview.domain.model.*;
 import com.yash.prreview.domain.port.AiReviewPort;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -19,15 +19,23 @@ import java.util.Map;
  * AI review adapter using Groq's free inference API (Llama 3.3 70B).
  * Calls Groq via WebClient — no SDK dependency, pure HTTP integration.
  */
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class OllamaReviewAdapter implements AiReviewPort {
+
+    private static final Logger log = LoggerFactory.getLogger(OllamaReviewAdapter.class);
 
     private final GroqClient groqClient;
     private final PromptBuilder promptBuilder;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
+
+    public OllamaReviewAdapter(GroqClient groqClient, PromptBuilder promptBuilder,
+                                ObjectMapper objectMapper, MeterRegistry meterRegistry) {
+        this.groqClient = groqClient;
+        this.promptBuilder = promptBuilder;
+        this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
+    }
 
     @Override
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 500))

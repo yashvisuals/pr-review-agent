@@ -1,6 +1,7 @@
 package com.yash.prreview.infrastructure.github;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +18,10 @@ import java.security.NoSuchAlgorithmException;
  *
  * GitHub sends: X-Hub-Signature-256: sha256=<hex_digest>
  */
-@Slf4j
 @Component
 public class WebhookSignatureVerifier {
+
+    private static final Logger log = LoggerFactory.getLogger(WebhookSignatureVerifier.class);
 
     private static final String HMAC_ALGORITHM = "HmacSHA256";
     private static final String SIGNATURE_PREFIX = "sha256=";
