@@ -8,8 +8,9 @@ spring:
       enabled: true
 
   datasource:
-    # Neon free tier: postgresql://user:pass@host.neon.tech/dbname?sslmode=require
-    url: ${DATABASE_URL}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 5        # Neon free tier connection limit is low
       minimum-idle: 1
