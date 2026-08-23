@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pr-review-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false         # Set manually in Render dashboard (from Neon)
+      - key: REDIS_URL
+        sync: false         # Set manually in Render dashboard (from Upstash)
+      - key: REDIS_SSL_ENABLED
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false         # Set manually in Render dashboard (from groq.com)
+      - key: GITHUB_TOKEN
+        sync: false         # GitHub personal access token
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false         # Any random secret string
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75.0"

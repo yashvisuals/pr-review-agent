@@ -1,0 +1,28 @@
+# Local development only — production uses Neon + Upstash + Render
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pr-review-postgres
+    environment:
+      POSTGRES_DB: pr_review_db
+      POSTGRES_USER: prreview
+      POSTGRES_PASSWORD: prreview123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prreview -d pr_review_db"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pr-review-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,21 @@
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: codellama:7b
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+github:
+  webhook:
+    secret: test-secret
+  api:
+    token: test-token
+
+logging:
+  level:
+    com.yash.prreview: DEBUG
