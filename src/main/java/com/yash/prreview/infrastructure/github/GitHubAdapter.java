@@ -73,7 +73,7 @@ public class GitHubAdapter implements GitHubPort {
                 .map(this::toGitHubComment)
                 .toList();
 
-        // APPROVE/REQUEST_CHANGES are blocked on self-owned PRs; COMMENT works universally
+        // APPROVE/REQUEST_CHANGES blocked on self-owned PRs; COMMENT works universally
         String event = switch (result.verdict()) {
             case APPROVE -> "COMMENT";
             case REQUEST_CHANGES -> reviewComments.isEmpty() ? "COMMENT" : "REQUEST_CHANGES";
