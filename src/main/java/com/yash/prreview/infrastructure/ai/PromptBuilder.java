@@ -10,6 +10,7 @@ import java.util.List;
 /**
  * Builds structured prompts for the AI model.
  * Uses Java 15+ text blocks for readable, maintainable prompt templates.
+ * All prompts are designed to produce JSON output for structured parsing.
  */
 @Component
 public class PromptBuilder {
