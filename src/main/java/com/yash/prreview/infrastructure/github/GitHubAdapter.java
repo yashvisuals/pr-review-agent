@@ -80,19 +80,21 @@ public class GitHubAdapter implements GitHubPort {
             case COMMENT -> "COMMENT";
         };
 
-        Map<String, Object> reviewBody = Map.of(
-                "body", formatReviewBody(result),
-                "event", event,
-                "comments", reviewComments
-        );
+        Map<String, Object> reviewBody = reviewComments.isEmpty()
+                ? Map.of("body", formatReviewBody(result), "event", event)
+                : Map.of("body", formatReviewBody(result), "event", event, "comments", reviewComments);
 
         webClient.post()
                 .uri("/repos/{owner}/{repo}/pulls/{prNumber}/reviews", owner, repo, prNumber)
                 .bodyValue(reviewBody)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError(), resp ->
+                        resp.bodyToMono(String.class).map(body -> {
+                            log.error("GitHub review API error {}: {}", resp.statusCode(), body);
+                            return new RuntimeException("GitHub API " + resp.statusCode() + ": " + body);
+                        }))
                 .bodyToMono(Map.class)
                 .doOnSuccess(r -> log.info("Review submitted successfully for PR #{}", prNumber))
-                .doOnError(e -> log.error("Failed to submit review: {}", e.getMessage()))
                 .block();
     }
 
