@@ -122,12 +122,7 @@ public class PromptBuilder {
     }
 
     public String buildScorePrompt(PullRequest pr, List<ReviewComment> comments) {
-        long critical = comments.stream()
-                .filter(c -> c.severity().label().equals("CRITICAL")).count();
-        long major = comments.stream()
-                .filter(c -> c.severity().label().equals("MAJOR")).count();
-        long minor = comments.stream()
-                .filter(c -> c.severity().label().equals("MINOR")).count();
+        var stats = countIssuesBySeverity(comments);
 
         return """
                 Rate this PR on a scale of 1-10 where:
@@ -143,7 +138,21 @@ public class PromptBuilder {
                 - Files changed: %d
 
                 Return ONLY a single integer from 1 to 10. No explanation.
-                """.formatted(critical, major, minor, pr.changedFiles().size());
+                """.formatted(stats.critical(), stats.major(), stats.minor(), pr.changedFiles().size());
+    }
+
+    private record IssueCounts(long critical, long major, long minor) {}
+
+    private IssueCounts countIssuesBySeverity(List<ReviewComment> comments) {
+        long critical = 0, major = 0, minor = 0;
+        for (ReviewComment c : comments) {
+            switch (c.severity().label()) {
+                case "CRITICAL" -> critical++;
+                case "MAJOR" -> major++;
+                case "MINOR" -> minor++;
+            }
+        }
+        return new IssueCounts(critical, major, minor);
     }
 
     private String buildIssueSummary(List<ReviewComment> comments) {
