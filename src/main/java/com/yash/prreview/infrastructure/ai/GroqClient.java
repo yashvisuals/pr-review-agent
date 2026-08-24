@@ -57,14 +57,24 @@ public class GroqClient {
                 )
         );
 
-        Map<?, ?> response = webClient.post()
-                .uri("/openai/v1/chat/completions")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        try {
+            Map<?, ?> response = webClient.post()
+                    .uri("/openai/v1/chat/completions")
+                    .bodyValue(request)
+                    .retrieve()
+                    .onStatus(status -> !status.is2xxSuccessful(), resp ->
+                            resp.bodyToMono(String.class).map(body -> {
+                                log.error("Groq API error {}: {}", resp.statusCode(), body);
+                                return new RuntimeException("Groq " + resp.statusCode() + ": " + body);
+                            }))
+                    .bodyToMono(Map.class)
+                    .block();
 
-        return extractContent(response);
+            return extractContent(response);
+        } catch (Exception e) {
+            log.error("Groq chat failed: {}", e.getMessage());
+            return "";
+        }
     }
 
     @SuppressWarnings("unchecked")
