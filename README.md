@@ -11,6 +11,27 @@ Live at: `https://pr-review-agent-qh1f.onrender.com`
 
 ---
 
+## Try It Out (Live Demo)
+
+The app is deployed and running. To get AI reviews on your own GitHub repo:
+
+1. **Add the webhook** to your GitHub repo → Settings → Webhooks → Add webhook:
+   - **Payload URL**: `https://pr-review-agent-qh1f.onrender.com/api/v1/webhooks/github`
+   - **Content type**: `application/json`
+   - **Secret**: `contact me for the secret` (or deploy your own instance below)
+   - **Events**: Select "Pull requests"
+
+2. **Open a Pull Request** in that repo — the AI review will be posted automatically as a comment
+
+3. **Check the health endpoint** anytime:
+   ```bash
+   curl https://pr-review-agent-qh1f.onrender.com/actuator/health
+   ```
+
+> The app runs on Render's free tier and may take ~30 seconds to wake up after inactivity. GitHub will retry the webhook automatically.
+
+---
+
 ## What It Does
 
 When you open or push to a Pull Request:
