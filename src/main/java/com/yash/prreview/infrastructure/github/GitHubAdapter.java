@@ -73,25 +73,29 @@ public class GitHubAdapter implements GitHubPort {
                 .map(this::toGitHubComment)
                 .toList();
 
+        // APPROVE/REQUEST_CHANGES are blocked on self-owned PRs; COMMENT works universally
         String event = switch (result.verdict()) {
-            case APPROVE -> "APPROVE";
-            case REQUEST_CHANGES -> "REQUEST_CHANGES";
+            case APPROVE -> "COMMENT";
+            case REQUEST_CHANGES -> reviewComments.isEmpty() ? "COMMENT" : "REQUEST_CHANGES";
             case COMMENT -> "COMMENT";
         };
 
-        Map<String, Object> reviewBody = Map.of(
-                "body", formatReviewBody(result),
-                "event", event,
-                "comments", reviewComments
-        );
+        // Omit comments field when empty — GitHub rejects empty arrays
+        Map<String, Object> reviewBody = reviewComments.isEmpty()
+                ? Map.of("body", formatReviewBody(result), "event", event)
+                : Map.of("body", formatReviewBody(result), "event", event, "comments", reviewComments);
 
         webClient.post()
                 .uri("/repos/{owner}/{repo}/pulls/{prNumber}/reviews", owner, repo, prNumber)
                 .bodyValue(reviewBody)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError(), resp ->
+                        resp.bodyToMono(String.class).map(body -> {
+                            log.error("GitHub API error {}: {}", resp.statusCode(), body);
+                            return new RuntimeException("GitHub API " + resp.statusCode() + ": " + body);
+                        }))
                 .bodyToMono(Map.class)
                 .doOnSuccess(r -> log.info("Review submitted successfully for PR #{}", prNumber))
-                .doOnError(e -> log.error("Failed to submit review: {}", e.getMessage()))
                 .block();
     }
 

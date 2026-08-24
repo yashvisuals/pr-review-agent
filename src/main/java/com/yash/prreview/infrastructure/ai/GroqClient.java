@@ -40,7 +40,7 @@ public class GroqClient {
                 """;
 
         this.webClient = WebClient.builder()
-                .baseUrl("https://api.groq.com/openai/v1")
+                .baseUrl("https://api.groq.com")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
@@ -58,7 +58,7 @@ public class GroqClient {
         );
 
         Map<?, ?> response = webClient.post()
-                .uri("/chat/completions")
+                .uri("/openai/v1/chat/completions")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(Map.class)
