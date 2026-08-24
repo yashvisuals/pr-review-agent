@@ -12,11 +12,12 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 5        # Neon free tier connection limit is low
+      maximum-pool-size: 5
       minimum-idle: 1
       connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      idle-timeout: 300000
+      max-lifetime: 600000
+      keepalive-time: 60000
 
   jpa:
     hibernate:
