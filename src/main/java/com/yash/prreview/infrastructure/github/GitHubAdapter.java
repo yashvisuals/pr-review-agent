@@ -73,9 +73,10 @@ public class GitHubAdapter implements GitHubPort {
                 .map(this::toGitHubComment)
                 .toList();
 
+        // Use COMMENT instead of APPROVE — APPROVE is blocked on self-owned PRs
         String event = switch (result.verdict()) {
-            case APPROVE -> "APPROVE";
-            case REQUEST_CHANGES -> "REQUEST_CHANGES";
+            case APPROVE -> "COMMENT";
+            case REQUEST_CHANGES -> result.comments().isEmpty() ? "COMMENT" : "REQUEST_CHANGES";
             case COMMENT -> "COMMENT";
         };
 
