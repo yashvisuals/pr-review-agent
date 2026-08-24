@@ -1,9 +1,26 @@
 # AI-Powered PR Review Agent
 
-Automated GitHub Pull Request reviewer built with **Java 25**, **Spring Boot 3.4**, and **Spring AI**.  
-Listens for GitHub webhooks → fetches PR diffs → runs parallel AI analysis → posts structured review comments back to GitHub.
+> A personal project by **Yash Biswakarma**
 
-**Deployed fully free, no credit card required.**
+Automated GitHub Pull Request reviewer built with **Java 21**, **Spring Boot 3.4**, and **Groq AI (Llama 3.3 70B)**.  
+Listens for GitHub webhooks → fetches PR diffs → runs parallel AI analysis across 4 dimensions → posts structured review comments back to GitHub.
+
+**Deployed fully free, zero cost, no credit card required.**
+
+Live at: `https://pr-review-agent-qh1f.onrender.com`
+
+---
+
+## What It Does
+
+When you open or push to a Pull Request:
+
+1. GitHub sends a webhook to the deployed app
+2. The app validates the HMAC-SHA256 signature and returns `202 Accepted` immediately
+3. In the background, it fetches the PR diff from GitHub
+4. Runs **4 parallel AI analyses** (Security, Bugs, Performance, Code Quality) using Groq's free Llama 3.3 70B
+5. Merges results, sorts by severity, calculates a quality score
+6. Posts a structured review comment back to the PR with inline code annotations
 
 ---
 
@@ -12,8 +29,8 @@ Listens for GitHub webhooks → fetches PR diffs → runs parallel AI analysis �
 | Service | Provider | Free Tier |
 |---|---|---|
 | App hosting | [Render](https://render.com) | 1 web service, sleeps after 15min inactivity |
-| PostgreSQL | [Neon](https://neon.tech) | 0.5 GB, serverless, **never expires** |
-| Redis | [Upstash](https://upstash.com) | 10,000 commands/day, **never expires** |
+| PostgreSQL | [Neon](https://neon.tech) | 0.5 GB, serverless, never expires |
+| Redis | [Upstash](https://upstash.com) | 10,000 commands/day, never expires |
 | AI model | [Groq](https://groq.com) | Llama 3.3 70B, 6,000 RPM, no credit card |
 
 ---
@@ -27,15 +44,15 @@ GitHub PR opened
 Render Web Service (Spring Boot)
       │
       ├── Validates HMAC-SHA256 webhook signature
-      ├── Returns 200 immediately (async processing)
+      ├── Returns 202 immediately (async processing)
       │
       ▼
 ReviewOrchestrationService
       │
-      ├─ Virtual Thread: analyzeFile(file, SECURITY)  ──► Groq API (free)
-      ├─ Virtual Thread: analyzeFile(file, BUGS)       ──► Groq API (free)
-      ├─ Virtual Thread: analyzeFile(file, PERFORMANCE)──► Groq API (free)
-      └─ Virtual Thread: analyzeFile(file, CODE_QUALITY)─► Groq API (free)
+      ├─ Virtual Thread: analyzeFile(file, SECURITY)   ──► Groq API (free)
+      ├─ Virtual Thread: analyzeFile(file, BUGS)        ──► Groq API (free)
+      ├─ Virtual Thread: analyzeFile(file, PERFORMANCE) ──► Groq API (free)
+      └─ Virtual Thread: analyzeFile(file, CODE_QUALITY)──► Groq API (free)
                                 │
                     CompletableFuture.allOf()
                                 │
@@ -66,7 +83,7 @@ application/    ← Spring @Service use cases wiring ports together
 
 infrastructure/ ← implements the ports
   github/       ← GitHubAdapter (WebClient), WebhookSignatureVerifier
-  ai/           ← OllamaReviewAdapter (Spring AI ChatClient)
+  ai/           ← OllamaReviewAdapter, GroqClient, PromptBuilder
   persistence/  ← JPA entities, ReviewPersistenceAdapter
 
 presentation/   ← Spring MVC controllers, DTOs, exception handler
@@ -76,7 +93,7 @@ presentation/   ← Spring MVC controllers, DTOs, exception handler
 
 ---
 
-## Modern Java Features
+## Modern Java Features Used
 
 ```java
 // Sealed interface — compiler-enforced exhaustive handling
@@ -85,10 +102,10 @@ public sealed interface ReviewSeverity
 
 // Pattern matching with switch (Java 21)
 String formatted = switch (severity) {
-    case Critical c  -> "🚨 CRITICAL: " + c.reason();
-    case Major m     -> "⚠️ MAJOR: " + m.reason();
-    case Minor min   -> "💡 MINOR: " + min.reason();
-    case Suggestion s -> "💭 SUGGESTION: " + s.description();
+    case Critical c   -> "CRITICAL: " + c.reason();
+    case Major m      -> "MAJOR: " + m.reason();
+    case Minor min    -> "MINOR: " + min.reason();
+    case Suggestion s -> "SUGGESTION: " + s.description();
 };
 
 // Virtual threads — each file×dimension runs as a separate virtual thread
@@ -109,7 +126,7 @@ public record ReviewResult(
 ) {}
 ```
 
-----
+---
 
 ## Deploy for Free (Step by Step)
 
@@ -122,13 +139,13 @@ public record ReviewResult(
 ### Step 2 — Set up Neon (free PostgreSQL)
 
 1. Go to [neon.tech](https://neon.tech) → Sign up free
-2. Create project → copy the connection string  
-   Format: `postgresql://user:pass@host.neon.tech/dbname?sslmode=require`
+2. Create project → copy the connection string
+3. Split into 3 parts for the env vars below (host only in `DB_URL`, credentials separate)
 
 ### Step 3 — Set up Upstash (free Redis)
 
 1. Go to [upstash.com](https://upstash.com) → Sign up free
-2. Create Redis database → copy the **TLS** connection URL  
+2. Create Redis database → copy the **TLS** connection URL from the TCP tab
    Format: `rediss://default:token@host.upstash.io:6380`
 
 ### Step 4 — Create a GitHub Personal Access Token
@@ -141,31 +158,32 @@ public record ReviewResult(
 
 1. Push this repo to GitHub
 2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect your GitHub repo
-4. Render auto-detects `render.yaml` — click **Apply**
-5. In the Render dashboard, set these environment variables:
+3. Connect your GitHub repo → Render auto-detects the `Dockerfile`
+4. Set these environment variables:
 
    | Key | Value |
    |---|---|
-   | `DATABASE_URL` | Your Neon connection string |
-   | `REDIS_URL` | Your Upstash TLS URL |
+   | `DB_URL` | `jdbc:postgresql://host.neon.tech/dbname?sslmode=require` |
+   | `DB_USERNAME` | Your Neon username |
+   | `DB_PASSWORD` | Your Neon password |
+   | `REDIS_URL` | Your Upstash TLS URL (`rediss://...`) |
    | `REDIS_SSL_ENABLED` | `true` |
    | `GROQ_API_KEY` | Your Groq API key |
    | `GITHUB_TOKEN` | Your GitHub PAT |
    | `GITHUB_WEBHOOK_SECRET` | Any random string (e.g. `openssl rand -hex 20`) |
 
-6. Deploy — your app URL will be: `https://pr-review-agent.onrender.com`
+5. Deploy — your app URL will be: `https://<your-service>.onrender.com`
 
 ### Step 6 — Configure GitHub Webhook
 
 In your target GitHub repo → Settings → Webhooks → Add webhook:
 
-- **Payload URL**: `https://pr-review-agent.onrender.com/api/v1/webhooks/github`
+- **Payload URL**: `https://<your-service>.onrender.com/api/v1/webhooks/github`
 - **Content type**: `application/json`
 - **Secret**: same value as `GITHUB_WEBHOOK_SECRET`
 - **Events**: Select "Pull requests"
 
-**Note:** Render free tier sleeps after 15 min of inactivity. The first webhook after sleep takes ~30s to respond. GitHub will retry — the review will still be posted.
+> **Note:** Render free tier sleeps after 15 min of inactivity. Set up [UptimeRobot](https://uptimerobot.com) (free) to ping `/actuator/health` every 5 minutes to keep it warm.
 
 ---
 
@@ -175,7 +193,7 @@ In your target GitHub repo → Settings → Webhooks → Add webhook:
 # Start local PostgreSQL + Redis
 docker compose up -d
 
-# Run with local profile (fill in application-local.yml first)
+# Run with local profile
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
@@ -186,7 +204,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 ### Manually trigger a review (no webhook needed)
 
 ```bash
-curl -X POST https://pr-review-agent.onrender.com/api/v1/reviews/trigger \
+curl -X POST https://<your-service>.onrender.com/api/v1/reviews/trigger \
   -H "Content-Type: application/json" \
   -d '{"owner": "your-org", "repo": "your-repo", "prNumber": 42}'
 ```
@@ -194,39 +212,44 @@ curl -X POST https://pr-review-agent.onrender.com/api/v1/reviews/trigger \
 ### Get review history for a repo
 
 ```bash
-curl "https://pr-review-agent.onrender.com/api/v1/reviews?repository=owner/repo"
+curl "https://<your-service>.onrender.com/api/v1/reviews?repository=owner/repo"
 ```
 
 ### Health check
 
 ```bash
-curl https://pr-review-agent.onrender.com/actuator/health
+curl https://<your-service>.onrender.com/actuator/health
 ```
 
 ---
 
 ## Sample Review Output
 
-```json
-{
-  "pullRequestNumber": 42,
-  "qualityScore": 4,
-  "verdict": "REQUEST_CHANGES",
-  "verdictDescription": "Changes requested — critical or major issues detected",
-  "totalComments": 3,
-  "criticalCount": 1,
-  "topIssues": [
-    {
-      "filename": "src/main/java/UserRepository.java",
-      "lineNumber": 47,
-      "severity": "CRITICAL",
-      "category": "SECURITY",
-      "message": "SQL injection: user input concatenated directly into query string",
-      "suggestion": "Use JPA parameterized queries or @Query with :param notation"
-    }
-  ],
-  "analysisTimeMs": 2340
-}
+```
+## AI Code Review
+
+**Quality Score:** 4/10
+**Verdict:** Changes requested — critical or major issues detected
+
+### Summary
+This PR introduces a user search endpoint but has a critical SQL injection
+vulnerability and missing pagination for large datasets.
+
+### Critical & Major Issues
+
+- **UserRepository.java** (`SECURITY`): SQL injection — user input concatenated directly into query string
+- **UserService.java** (`PERFORMANCE`): Missing pagination — query could return unbounded rows
+
+### Issue Breakdown
+
+| Category | Count |
+|---|---|
+| SECURITY | 1 |
+| PERFORMANCE | 1 |
+| CODE_QUALITY | 2 |
+
+---
+*Reviewed by AI PR Review Agent*
 ```
 
 ---
@@ -235,12 +258,12 @@ curl https://pr-review-agent.onrender.com/actuator/health
 
 | | Technology |
 |---|---|
-| Language | Java 25 |
+| Language | Java 21 |
 | Framework | Spring Boot 3.4 |
-| AI | Spring AI 1.0 + Groq (Llama 3.3 70B) |
+| AI | Groq REST API (Llama 3.3 70B) |
 | Database | PostgreSQL 16 via Neon (serverless) |
 | Cache | Redis 7 via Upstash (serverless) |
 | HTTP Client | Spring WebFlux WebClient |
 | Observability | Micrometer + Prometheus |
-| Testing | JUnit 5 + Testcontainers + Mockito |
+| Testing | JUnit 5 + Mockito |
 | Deploy | Render + Docker |
